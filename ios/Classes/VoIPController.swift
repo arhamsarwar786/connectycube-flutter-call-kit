@@ -52,24 +52,24 @@ extension VoIPController: PKPushRegistryDelegate {
     func pushRegistry(_ registry: PKPushRegistry, didReceiveIncomingPushWith payload: PKPushPayload, for type: PKPushType, completion: @escaping () -> Void) {
         print("[VoIPController][pushRegistry][didReceiveIncomingPushWith] payload: \(payload.dictionaryPayload)")
         
-        let callData = payload.dictionaryPayload
+        let callData = payload.dictionaryPayload["aps"] as? [String: Any]
         
         if type == .voIP{
-            let callId = callData["session_id"] as! String
-            let signalingType = callData["signal_type"] as? String
+            let callId = callData!["session_id"] as! String
+            let signalingType = callData!["signal_type"] as? String
             
             if (signalingType != nil && (signalingType == "endCall" || signalingType == "rejectCall")) {
                 self.callKitController.reportCallEnded(uuid: UUID(uuidString: callId.lowercased())!, reason: CallEndedReason.remoteEnded)
                 
                 completion()
             } else if (signalingType != nil && signalingType == "startCall") {
-                let callType = callData["call_type"] as! Int
-                let callInitiatorId = callData["caller_id"] as! Int
-                let callInitiatorName = callData["caller_name"] as! String
-                let callOpponentsString = callData["call_opponents"] as! String
+                let callType = 0 //callData?["call_type"] as! Int
+                let callInitiatorId = 1234 //callData!["callerid"] as! Int
+                let callInitiatorName = callData!["callerid"] as! String
+                let callOpponentsString = callData!["callerid"] as! String
                 let callOpponents = callOpponentsString.components(separatedBy: ",")
                     .map { Int($0) ?? 0 }
-                let userInfo = callData["user_info"] as? String
+                let userInfo = callData!["callerid"] as? String
                 
                 self.callKitController.reportIncomingCall(uuid: callId.lowercased(), callType: callType, callInitiatorId: callInitiatorId, callInitiatorName: callInitiatorName, opponents: callOpponents, userInfo: userInfo) { (error) in
                     
